@@ -1,0 +1,17 @@
+---
+BasedOnStyle: Google
+AccessModifierOffset: -2
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+Cpp11BracedListStyle: false
+IndentCaseLabels: false
+PenaltyBreakBeforeFirstCallParameter: 100000000
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 10
+PointerAlignment: Middle
+Standard: Cpp11
+...
+
