@@ -36,3 +36,22 @@
 .*.sw*
 *~
 
+.deps
+.dirstamp
+.libs
+
+# Tags
+tags
+
+# Build Infrastructure
+/aclocal.m4
+/autom4te.cache/
+/config.log
+/config/
+/config.status
+/configure
+/libtool
+/m4/
+/Makefile.in
+/Makefile
+
