@@ -2,7 +2,14 @@
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-AM_CPPFLAGS = -I src
+AM_CPPFLAGS = -I $(top_srcdir)/include
+
+slibdir = @libdir@
+slib_PROGRAMS = src/ld-multiload
+
+src_ld_multiload_CXXFLAGS =
+src_ld_multiload_LDADD =
+src_ld_multiload_SOURCES = src/multiload.cc
 
 MAINTAINERCLEANFILES = aclocal.m4  \
 		       configure   \
