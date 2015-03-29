@@ -37,64 +37,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "multiload/configuration.hh"
 #include "multiload/scoped-file-descriptor.hh"
 #include "multiload/scoped-mmap.hh"
+
 #include "elf/types.hh"
-#include "support/format.hh"
 
 namespace multiload {
 void print_help(const char *argv0) {
   std::cerr << R"(multiload - a loader dispatcher
 Copyright 2015 Saleem Abdulrasool <compnerd@compnerd.org>
 )";
-}
-
-template <size_t BitSex>
-[[noreturn]] void dispatch(const uint8_t *base, char *argv[]);
-
-template <>
-[[noreturn]] void dispatch<32>(const uint8_t *base, char *argv[]) {
-  const auto ehdr = *reinterpret_cast<const elf::header<32> *>(base);
-  switch (ehdr.machine_type) {
-  case elf::machine::i386:
-    ::execvpe("/usr/i686-pc-linux-gnu/lib/ld-linux.so.2", argv, environ);
-  }
-  std::cerr << "unhandled 32-bit machine type: "
-            << format::hex(static_cast<uint16_t>(ehdr.machine_type));
-  __builtin_trap();
-}
-
-template <>
-[[noreturn]] void dispatch<64>(const uint8_t *base, char *argv[]) {
-  const auto ehdr = *reinterpret_cast<const elf::header<64> *>(base);
-  switch (ehdr.machine_type) {
-  case elf::machine::x86_64:
-    ::execvpe("/usr/x86_64-pc-linux-gnu/lib/ld-linux-x86-64.so.2", argv,
-              environ);
-  }
-  std::cerr << "unhandled 64-bit machine type: "
-            << format::hex(static_cast<uint16_t>(ehdr.machine_type));
-  __builtin_trap();
-}
-
-[[noreturn]] void dispatch_elf_class(const uint8_t *base, char *argv[]) {
-  const auto &identifier = *reinterpret_cast<const elf::identifier *>(base);
-  const auto file_class =
-      identifier[static_cast<int>(elf::identifier_field::file_class)];
-
-  // NOTE(compnerd) hide the fact that multiload was ever in the picture
-  argv[0] = argv[1];
-
-  switch (static_cast<const elf::file_class>(file_class)) {
-  case elf::file_class::none:
-    ::exit(EXIT_FAILURE);
-  case elf::file_class::class_32:
-    dispatch<32>(base, argv);
-  case elf::file_class::class_64:
-    dispatch<64>(base, argv);
-  }
-
-  __builtin_trap();
 }
 }
 
@@ -106,6 +59,9 @@ int main(int argc, char *argv[]) {
 
   // TODO(compnerd) support arguments
 
+  multiload::configuration configuration(SYSCONFDIR "/" "multiload.conf");
+  if (!configuration.load())
+    return EXIT_FAILURE;
 
   multiload::scoped_file_descriptor fd(::open(argv[1], O_RDONLY | O_CLOEXEC));
   if (fd < 0) {
@@ -138,7 +94,9 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  dispatch_elf_class(mapping, argv);
+  // NOTE(compnerd) hide the fact that multiload was ever in the picture
+  argv[0] = argv[1];
+  configuration.dispatch(mapping, argv);
 
   __builtin_trap();
 }
